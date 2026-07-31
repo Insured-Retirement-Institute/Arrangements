@@ -1,0 +1,60 @@
+{
+  "method": "POST",
+  "url": "https://api.your-company-domain.com/v1/policies/ABC12345/arrangements/auto-rebalance",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": "Bearer <token>",
+    "correlationId": "c0ffee00-1111-2222-3333-444455556666"
+  },
+  "query": {
+    "associatedFirmId": "DTCC"
+  },
+  "body": {
+    "effectiveDate": "2026-06-15",
+    "externalArrangementId": "AR-EXT-20260615-001",
+    "nsccParticipantId": "NSCC998877",
+    "cusip": "123AB4567",
+    "actionIndicator": "N",
+    "arrangement": {
+      "productCode": "AR-001",
+      "arrangementType": "ASSET_REBALANCING",
+      "arrangementSubType": "STANDARD_REBALANCE",
+      "startDate": "2026-06-15",
+      "endDate": "2030-06-15",
+      "destinationTransferAmountType": "PERCENT",
+      "frequency": "MONTHLY"
+    },
+    "funds": {
+      "transferToFunds": [
+        {
+          "fundId": "DST-FUND-101",
+          "requestedPercentage": 100
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 1000.0,
+      "correlationGuid": "123e4567-e89b-12d3-a456-426614174000",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "individual",
+        "firstName": "John",
+        "middleName": "A",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "456789",
+      "npn": "123456",
+      "crdNumber": "654321"
+    }
+  }
+}

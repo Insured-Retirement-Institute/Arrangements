@@ -1,0 +1,67 @@
+{
+  "method": "PUT",
+  "url": "https://api.your-company-domain.com/v1/policies/ABC12345/arrangements/dollar-cost-average/ARR123456",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": "Bearer <token>",
+    "correlationId": "c0ffee00-1111-2222-3333-444455556666"
+  },
+  "query": {
+    "associatedFirmId": "DTCC"
+  },
+  "body": {
+  "effectiveDate": "2026-06-15",
+  "nsccParticipantId": "NSCC998877",
+  "cusip": "123AB4567",
+  "actionIndicator": "O",
+  "arrangement": {
+    "productCode": "DCA-001",
+    "arrangementType": "DOLLAR_COST_AVERAGE",
+    "arrangementSubType": "STANDARD_DCA",
+    "startDate": "2026-06-15",
+    "endDate": "2030-06-15",
+    "sourceTransferAmountType": "AMOUNT",
+    "destinationTransferAmountType": "AMOUNT",
+    "frequency": "MONTHLY",
+    "nextTransactionDate": "2026-07-15"
+  },
+  "funds": {
+    "transferFromFunds": [
+      {
+        "fundId": "SRC-FUND-001",
+        "requestedAmount": 600.0
+      }
+    ],
+    "transferToFunds": [
+      {
+        "fundId": "DST-FUND-101",
+        "requestedAmount": 600.0
+      }
+    ]
+  },
+  "auditTransSummation": {
+    "auditTotalType": "SUM",
+    "auditTotal": 1000.0,
+    "correlationGuid": "123e4567-e89b-12d3-a456-426614174000",
+    "correlationIdState": "INITIAL_USAGE"
+  },
+  "parties": [
+    {
+      "type": "individual",
+      "firstName": "John",
+      "middleName": "A",
+      "lastName": "Doe",
+      "taxId": "123456789",
+      "relationships": [
+        "OWNER"
+      ]
+    }
+  ],
+  "producer": {
+    "producerNumber": "456789",
+    "npn": "123456",
+    "crdNumber": "654321"
+  }
+}
+}
