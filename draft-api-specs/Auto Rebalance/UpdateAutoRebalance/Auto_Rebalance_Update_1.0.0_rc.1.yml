@@ -1,0 +1,777 @@
+openapi: 3.1.0
+info:
+  title: Auto Rebalance Service
+  version: 1.0.0_rc.1
+  description: API to update Auto Rebalance (AR) transactions.
+
+paths:
+  /v1/policies/{policyNumber}/arrangements/auto-rebalance/{arrangementId}:
+    put:
+      operationId: updateAR
+      description: |
+        Update an existing Auto Rebalance (AR) arrangement for the
+        identified policy.
+      tags:
+        - Auto Rebalance
+      parameters:
+        - $ref: '#/components/parameters/PolicyNumber'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/AssociatedFirmId'
+        - $ref: '#/components/parameters/ArrangementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAutoRebalanceRequest'
+            examples:
+              AR_Update_Example_Full:
+                value:
+                  effectiveDate: 2026-06-15
+                  nsccParticipantId: "NSCC998877"
+                  cusip: "123AB4567"
+                  actionIndicator: "O"
+                  arrangement:
+                    productCode: "AR-001"
+                    arrangementType: "ASSET_REBALANCING"
+                    arrangementSubType: "STANDARD_REBALANCE"
+                    startDate: 2026-06-15
+                    endDate: 2030-06-15
+                    destinationTransferAmountType: "PERCENT"
+                    frequency: "MONTHLY"
+                    nextTransactionDate: 2026-07-15
+                  funds:
+                    transferToFunds:
+                      - fundId: "DST-FUND-101"
+                        requestedPercentage: 100
+                  auditTransSummation:
+                    auditTotalType: "SUM"
+                    auditTotal: 1000.00
+                    correlationGuid: "123e4567-e89b-12d3-a456-426614174000"
+                    correlationIdState: "INITIAL_USAGE"
+                  parties:
+                    - type: "individual"
+                      firstName: "John"
+                      middleName: "A"
+                      lastName: "Doe"
+                      taxId: "123456789"
+                      relationships:
+                        - OWNER
+                  producer:
+                    producerNumber: "456789"
+                    npn: "123456"
+                    crdNumber: "654321"
+
+      responses:
+        '202':
+          description: |
+            Accepted — request accepted for processing.
+          headers:
+            Location:
+              description: >
+                URL of the updated arrangement request resource for this update operation.
+                Format: /v1/policies/{policyNumber}/arrangement-requests/{requestId}
+              schema:
+                type: string
+                format: uri
+            correlationId:
+              $ref: '#/components/headers/correlationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoRebalanceResponse'
+        '400': { $ref: '#/components/responses/BadRequestError' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '405': { $ref: '#/components/responses/MethodNotAllowedError' }
+        '406': { $ref: '#/components/responses/NotAcceptableError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '413': { $ref: '#/components/responses/PayloadTooLargeError' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaTypeError' }
+        '422': { $ref: '#/components/responses/UnprocessableEntityError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+        '502': { $ref: '#/components/responses/BadGatewayError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+        '504': { $ref: '#/components/responses/GatewayTimeoutError' }
+
+  /v1/policies/{policyNumber}/arrangement-requests/{requestId}:
+    get:
+      operationId: getArrangementRequest
+      tags:
+        - Arrangement Request Lifecycle
+      description: >
+        Retrieve the current processing status of a previously submitted
+        arrangement request. This endpoint allows clients to poll for
+        status updates until the transaction reaches a final outcome.
+      parameters:
+        - $ref: '#/components/parameters/PolicyNumber'
+        - name: requestId
+          in: path
+          required: true
+          description: >
+            Identifier returned in the Location header from the arrangement request PUT.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Arrangement request resource.
+          headers:
+            correlationId:
+              $ref: '#/components/headers/correlationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArrangementRequestStatus'
+        '400': { $ref: '#/components/responses/BadRequestError' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+components:
+  headers:
+    correlationId:
+      description: Correlates this response to requests and downstream logs.
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+
+  responses:
+    BadRequestError:
+      description: Bad Request
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnauthorizedError:
+      description: Unauthorized
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ForbiddenError:
+      description: Forbidden
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: Not Found
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    MethodNotAllowedError:
+      description: Method Not Allowed
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotAcceptableError:
+      description: Not Acceptable
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ConflictError:
+      description: Conflict
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PayloadTooLargeError:
+      description: Payload Too Large
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaTypeError:
+      description: Unsupported Media Type
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequestsError:
+      description: Too Many Requests
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal Server Error
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadGatewayError:
+      description: Bad Gateway
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailableError:
+      description: Service Unavailable
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    GatewayTimeoutError:
+      description: Gateway Timeout
+      headers:
+        correlationId:
+          $ref: '#/components/headers/correlationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    PolicyNumber:
+      name: policyNumber
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 30
+    CorrelationId:
+      name: correlationId
+      in: header
+      required: true
+      description: Unique identifier to trace the request
+      schema:
+        type: string
+        maxLength: 100
+    AssociatedFirmId:
+      name: associatedFirmId
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 65
+    ArrangementId:
+      name: arrangementId
+      in: path
+      required: true
+      schema:  
+          type: string
+          minLength: 1
+          maxLength: 100
+
+  schemas:
+    UpdateAutoRebalanceRequest:
+      type: object
+      required:
+        - effectiveDate
+        - actionIndicator
+        - arrangement
+        - nsccParticipantId
+        - cusip
+        - producer
+      properties:
+        effectiveDate:
+          type: string
+          format: date
+        nsccParticipantId:
+          type: string
+          maxLength: 100
+        cusip:
+          type: string
+          minLength: 9
+          maxLength: 9
+          pattern: ^[0-9]{3}[A-Z0-9]{5}[0-9]$
+        actionIndicator:
+          type: string
+          enum: [O, C]
+          description: >
+              Action to perform on the arrangement.
+              O = Update or override an existing arrangement.
+              C = Cancel an existing arrangement.
+        arrangement:
+          $ref: '#/components/schemas/Arrangement'
+        funds:
+          description: >
+            Defines the target fund allocation for the Auto Rebalance arrangement.
+
+            Fund allocations are used only when
+            arrangement.arrangementSubType is STANDARD_REBALANCE.
+
+            For REBALANCE_TO_VARIABLE_FUNDS_ONLY and
+            REBALANCE_TO_STANDING_ALLOCATIONS, the allocation is derived from
+            existing policy allocations and the funds object must not be supplied.
+
+            Because Auto Rebalance uses a destinationTransferAmountType of
+            PERCENT, each target fund must specify a requestedPercentage.
+          $ref: '#/components/schemas/Funds'
+        auditTransSummation:
+          $ref: '#/components/schemas/AuditTransSummation'
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        producer:
+          $ref: '#/components/schemas/Producer'
+      allOf:
+        - if:
+            required:
+              - arrangement
+            properties:
+              arrangement:
+                required:
+                  - arrangementSubType
+                properties:
+                  arrangementSubType:
+                    const: STANDARD_REBALANCE
+          then:
+            required:
+              - funds
+        - if:
+            required:
+              - arrangement
+            properties:
+              arrangement:
+                required:
+                  - arrangementSubType
+                properties:
+                  arrangementSubType:
+                    enum:
+                      - REBALANCE_TO_VARIABLE_FUNDS_ONLY
+                      - REBALANCE_TO_STANDING_ALLOCATIONS
+          then:
+            not:
+              required:
+                - funds
+
+    Arrangement:
+      type: object
+      required:
+        - productCode
+        - arrangementType
+        - frequency
+        - destinationTransferAmountType
+        - arrangementSubType
+      properties:
+        productCode:
+          type: string
+          maxLength: 100
+        arrangementType:
+          type: string
+          const: ASSET_REBALANCING
+        arrangementSubType:
+          type: string
+          enum: [STANDARD_REBALANCE, REBALANCE_TO_VARIABLE_FUNDS_ONLY, REBALANCE_TO_STANDING_ALLOCATIONS]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          description: the date the arrangement should end.
+        destinationTransferAmountType:
+          type: string
+          const: PERCENT
+        frequency:
+          type: string
+          enum: [DAILY, EVERY_TWO_WEEKS, MONTHLY, SEMI_ANNUAL, QUARTERLY, ANNUAL]
+        nextTransactionDate:
+          type: string
+          format: date
+
+    Funds:
+      type: object
+      properties:
+        transferToFunds:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FundItem'
+
+    FundItem:
+      type: object
+      required:
+        - fundId
+        - requestedPercentage
+      properties:
+        fundId:
+          type: string
+          maxLength: 100
+        requestedPercentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    AuditTransSummation:
+      type: object
+      properties:
+        auditTotalType:
+          type: string
+          enum: [COUNT, SUM, MEAN]
+        auditTotal:
+          type: number
+          minimum: 0
+        correlationGuid:
+          type: string
+          format: uuid
+        correlationIdState:
+          type: string
+          enum: [INITIAL_USAGE, ONGOING_USAGE, FINAL_USAGE]
+
+    Producer:
+      type: object
+      required:
+        - npn
+      properties:
+        producerNumber:
+          type: string
+          maxLength: 100
+        npn:
+          type: string
+          maxLength: 100
+        crdNumber:
+          type: string
+          maxLength: 100
+
+    Party:
+      type: object
+      description: |
+        The parties object represents the policy parties relevant to the arrangement (owners, annuitants, beneficiaries, etc.), along with their identity, relationship, and payout instructions.
+      anyOf:
+        - $ref: '#/components/schemas/IndividualParty'
+        - $ref: '#/components/schemas/EntityParty'
+
+    IndividualParty:
+      description: Schema for individual party data
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IndividualIdentity'
+        - $ref: '#/components/schemas/PartyRelationship'
+
+    EntityParty:
+      description: Schema for entity party data
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/EntityIdentity'
+        - $ref: '#/components/schemas/PartyRelationship'
+
+    IndividualIdentity:
+      description: Schema for individual identity data
+      required: [firstName, lastName, taxId]
+      type: object
+      properties:
+        type:
+          type: string
+          const: individual
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 105
+          pattern: '^[a-zA-Z0-9=()*@#\s.,''_/~%$!();:&"®`\\?\-]{1,105}$'
+        middleName:
+          type: string
+          minLength: 1
+          maxLength: 105
+          pattern: '^[a-zA-Z0-9=()*@#\s.,''_/~%$!();:&"®`\\?\-]{1,105}$'
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 105
+          pattern: '^[a-zA-Z0-9=()*@#\s.,''_/~%$!();:&"®`\\?\-]{1,105}$'
+        taxId:
+          type: string
+          maxLength: 9
+
+    EntityIdentity:
+      description: Schema for entity identity data
+      type: object
+      required: [type, name, taxId]
+      properties:
+        type:
+          type: string
+          const: entity
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[\w=()*@#\s.,''\/~%$!;:&"®`\\?\-]{1,100}$'
+        taxId:
+          type: string
+          maxLength: 9
+    
+    PartyRelationship:
+      description: Schema for party relationship data
+      type: object
+      required: [relationships]
+      properties:
+        relationships:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            type: string
+            enum:
+            - OWNER
+            - JOINT_OWNER
+            - ANNUITANT
+            - JOINT_ANNUITANT
+            - PRIMARY_BENEFICIARY
+            - CONTINGENT_BENEFICIARY
+
+    AutoRebalanceResponse:
+      description: Synchronous Day-1 response to an Auto Rebalance update request.
+      type: object
+      required:
+        - status
+        - requestId
+      properties:
+        requestId:
+          description: |
+           Server-assigned identifier for this update submission. Carried forward
+            into the Day-2 confirmation event so consumers can correlate
+            Day-1 and Day-2.
+          type: string
+        status:
+          description: Synchronous-tier outcome.
+          type: string
+          const: ACCEPTED
+        message:
+          description: Optional informational message related to request submission.
+          type: string
+          maxLength: 500
+
+    Day2ArrangementConfirmationEvent:
+      x-event-mesh:
+        broker: SAP Advanced Event Mesh / Solace
+        topicPattern: "{root}/ift/v1/{eventType}/{status}/{transactionType}/{firm}"
+        deliveryModel: topic-subscription
+        asyncApiSpec: "./asyncapi/AR_Day2_v1.yaml"
+        note: >
+          Delivered over a message broker via topic subscription, not an HTTP
+          callback. A companion AsyncAPI document is the machine-readable
+          contract; this extension exists for interim discoverability.
+      type: object
+      description: >
+        Canonical Day-2 arrangement confirmation event published to the enterprise event mesh after an arrangement transaction completes processing.
+      required:
+        - eventType
+        - eventId
+        - eventTimestamp
+        - associatedFirmId
+        - requestId
+        - policyNumber
+        - transactionType
+        - status
+        - transExeDate
+        - transExeTime
+        - nsccParticipantId
+        - npn
+        - correlationId
+      properties:
+        # Event-level metadata
+        eventType:
+          type: string
+          description: >
+            Identifies the type of Day-2 confirmation event published to
+            the event mesh. 
+          enum:
+            - DAY2_CONFIRM
+        eventId:
+          type: string
+          format: uuid
+          maxLength: 36
+          description: >
+            Globally unique identifier for this event. Used by consuming
+            systems for idempotent processing and duplicate detection.
+        eventTimestamp:
+          type: string
+          format: date-time
+          description: >
+            Date and time when the event was published to the event mesh.
+        associatedFirmId:
+          type: string
+          maxLength: 65
+          description: >
+            Firm identifier associated with the transaction. Populated by
+            the integration platform as part of event enrichment.
+
+        # Day-2 business outcome data
+        requestId:
+          type: string
+          description: >
+            Identifier assigned when the arrangement request was submitted.
+            Used to correlate the Day-2 confirmation with the original
+            Day-1 request.
+        correlationId:
+          type: string
+          maxLength: 100
+          description: >
+            Correlation identifier supplied with the original
+            request and propagated to the Day-2 confirmation for
+            end-to-end traceability.
+        policyNumber:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: >
+            Policy number associated with the arrangement request.
+        transactionType:
+          type: string
+          enum:
+            - SUBMIT_AUTO_REBALANCE
+            - UPDATE_AUTO_REBALANCE
+            - CANCEL_AUTO_REBALANCE
+          description: >
+            High-level classification of the transaction that completed
+            processing.For example, SUBMIT_* indicates creation of a new arrangement and UPDATE_* indicates modification of an existing arrangement.
+        status:
+          type: string
+          description: >
+            Final processing outcome of the arrangement request.
+          enum:
+            - SUCCESS
+            - SUCCESS_WITH_INFO
+            - FAILURE
+        message:
+          type: string
+          description: >
+            Human-readable explanation of the outcome. Populated when the transaction fails or additional explanation is required.
+        effectiveDate:
+          type: string
+          format: date
+          description: >
+            The date the AR transaction is intended to take effect. This may fall on a non-business day depending on carrier processing rules
+        npn:
+          type: string
+          maxLength: 100
+          description: >
+            National Producer Number associated with the transaction,
+            when available.
+        nsccParticipantId:
+          type: string
+          maxLength: 100
+          description: >
+            Unique identifier assigned to the submitting firm or participant within the NSCC network for transaction routing and processing.
+        transExeDate:
+          type: string
+          format: date
+          description: >
+            Date on which the Day‑2 confirmation was produced by the
+            transaction processing system.
+        transExeTime:
+          type: string
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
+          description: >
+            Time on which the Day-2 confirmation was produced by the
+            transaction processing system.
+
+    Error:
+      type: object
+      properties:
+        httpStatus:
+          type: integer
+          description: HTTP status code associated with this error
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          description: >
+            A structured error code that uniquely identifies the type of error. This can follow a hierarchical format:
+            - `<domain>`: The logical domain (e.g., "gateway")
+            - `<category>`: The error category (e.g., "client" or "server")
+            - `<subcategory>`: A specific error identifier (e.g., "badrequest", "timeout")
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the error occurred
+        message:
+          type: string
+          description: Message with specific error details.
+        validationErrors:
+          type: array
+          description: Logical rule violations or decision failures related to business logic or rules
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                description: Code to classify the error & Identifies the type of business rule or decision failure.
+              message:
+                type: string
+                description: Why the error occurred / Specific business rule violation
+      required:
+        - code
+        - message
+  
+    GetArrangementRequestStatus:
+        type: object
+        description: >
+          Current processing status of a previously submitted
+          arrangement request
+        properties:
+          requestId:
+            type: string
+            description: Server-assigned identifier for the arrangement request.
+          status:
+            type: string
+            description: Current status of the arrangement request.
+            enum: [IN_PROGRESS, SUCCESS, REJECTED]
+          effectiveDate:
+            type: string
+            format: date
+          message:
+            type: string
+            description: >
+              Optional informational or error message explaining the
+              processing result.
+        required: [requestId, status]
