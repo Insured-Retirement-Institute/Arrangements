@@ -1,52 +1,47 @@
 openapi: 3.1.0
 info:
-  title: Dollar Cost Average Service
-  version: 1.0.0
-  description: API to update Dollar Cost Average (DCA) transactions.
+  title: Auto Rebalance Service
+  version: 1.0.0_rc.1
+  description: API to submit Auto Rebalance (AR) transactions.
 
 paths:
-  /v1/policies/{policyNumber}/arrangements/dollar-cost-average/{arrangementId}:
-    put:
-      operationId: updateDCA
+  /v1/policies/{policyNumber}/arrangements/auto-rebalance:
+    post:
+      operationId: submitAR
       description: |
-        Update a DCA arrangement against the identified policy.
+        Submit a new, AR arrangement against the identified policy.
       tags:
-        - Dollar Cost Average
+        - Auto Rebalance
       parameters:
         - $ref: '#/components/parameters/PolicyNumber'
         - $ref: '#/components/parameters/CorrelationId'
         - $ref: '#/components/parameters/AssociatedFirmId'
-        - $ref: '#/components/parameters/ArrangementId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateDCARequest'
+              $ref: '#/components/schemas/SubmitAutoRebalanceRequest'
             examples:
-              DCA_Update_Example:
+              AR_Submit_Example_Full:
                 value:
                   effectiveDate: 2026-06-15
+                  externalArrangementId: "AR-EXT-20260615-001"
                   nsccParticipantId: "NSCC998877"
                   cusip: "123AB4567"
-                  actionIndicator: "O"
+                  actionIndicator: "N"
                   arrangement:
-                    productCode: "DCA-001"
-                    arrangementType: "DOLLAR_COST_AVERAGE"
-                    arrangementSubType: "STANDARD_DCA"
+                    productCode: "AR-001"
+                    arrangementType: "ASSET_REBALANCING"
+                    arrangementSubType: "STANDARD_REBALANCE"
                     startDate: 2026-06-15
                     endDate: 2030-06-15
-                    sourceTransferAmountType: "AMOUNT"
-                    destinationTransferAmountType: "AMOUNT"
+                    destinationTransferAmountType: "PERCENT"
                     frequency: "MONTHLY"
-                    nextTransactionDate: 2026-07-15
                   funds:
-                    transferFromFunds:
-                      - fundId: "SRC-FUND-001"
-                        requestedAmount: 600.00
                     transferToFunds:
                       - fundId: "DST-FUND-101"
-                        requestedAmount: 600.00
+                        requestedPercentage: 100
                   auditTransSummation:
                     auditTotalType: "SUM"
                     auditTotal: 1000.00
@@ -66,9 +61,9 @@ paths:
                     crdNumber: "654321"
 
       responses:
-        '202':
+        '201':
           description: |
-            Accepted — request accepted for processing.
+            Created — AR arrangement request accepted for processing.
           headers:
             Location:
               description: >
@@ -82,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DCAResponse'
+                $ref: '#/components/schemas/AutoRebalanceResponse'
         '400': { $ref: '#/components/responses/BadRequestError' }
         '401': { $ref: '#/components/responses/UnauthorizedError' }
         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -105,7 +100,7 @@ paths:
       tags:
         - Arrangement Request Lifecycle
       description: >
-        Retrieve the current processing status of a previously updated
+        Retrieve the current processing status of a previously submitted
         arrangement request. This endpoint allows clients to poll for
         status updates until the transaction reaches a final outcome.
       parameters:
@@ -114,7 +109,7 @@ paths:
           in: path
           required: true
           description: >
-            Identifier returned in the Location header from the arrangement request PUT.
+            Identifier returned in the Location header from the arrangement request POST.
           schema:
             type: string
       responses:
@@ -304,30 +299,26 @@ components:
         type: string
         minLength: 1
         maxLength: 65
-    ArrangementId:
-      name: arrangementId
-      in: path
-      required: true
-      schema:  
-          type: string
-          minLength: 1
-          maxLength: 100
+
   schemas:
-    UpdateDCARequest:
+    SubmitAutoRebalanceRequest:
       type: object
       required:
         - effectiveDate
+        - externalArrangementId
         - actionIndicator
-        - funds
+        - arrangement
         - nsccParticipantId
         - cusip
-        - arrangement
         - producer
       properties:
         effectiveDate:
           type: string
           format: date
         nsccParticipantId:
+          type: string
+          maxLength: 100
+        externalArrangementId:
           type: string
           maxLength: 100
         cusip:
@@ -337,27 +328,25 @@ components:
           pattern: ^[0-9]{3}[A-Z0-9]{5}[0-9]$
         actionIndicator:
           type: string
-          enum: [O, C]
+          const: N
           description: >
-            Action to perform on the arrangement.
-            O = Update or override an existing arrangement.
-            C = Cancel an existing arrangement.
+              Action to perform on the arrangement.
+              N = New arrangement submission.
         arrangement:
           $ref: '#/components/schemas/Arrangement'
         funds:
           description: >
-              Identifies the source and destination fund allocations that participate
-              in the Dollar Cost Average arrangement.
+            Defines the target fund allocation for the Auto Rebalance arrangement.
 
-              The amount or percentage fields required within each fund are determined
-              by arrangement.sourceTransferAmountType and
-              arrangement.destinationTransferAmountType.
+            Fund allocations are used only when
+            arrangement.arrangementSubType is STANDARD_REBALANCE.
 
-              When a transfer amount type is AMOUNT, the corresponding fund entries
-              must provide requestedAmount.
+            For REBALANCE_TO_VARIABLE_FUNDS_ONLY and
+            REBALANCE_TO_STANDING_ALLOCATIONS, the allocation is derived from
+            existing policy allocations and the funds object must not be supplied.
 
-              When a transfer amount type is PERCENT, the corresponding fund entries
-              must provide requestedPercentage.
+            Because Auto Rebalance uses a destinationTransferAmountType of
+            PERCENT, each target fund must specify a requestedPercentage.
           $ref: '#/components/schemas/Funds'
         auditTransSummation:
           $ref: '#/components/schemas/AuditTransSummation'
@@ -374,106 +363,49 @@ components:
             properties:
               arrangement:
                 required:
-                  - sourceTransferAmountType
+                  - arrangementSubType
                 properties:
-                  sourceTransferAmountType:
-                    const: AMOUNT
+                  arrangementSubType:
+                    const: STANDARD_REBALANCE
           then:
-            properties:
-              funds:
-                properties:
-                  transferFromFunds:
-                    items:
-                      required:
-                        - requestedAmount
-                      not:
-                        required:
-                          - requestedPercentage
-
+            required:
+              - funds
         - if:
             required:
               - arrangement
             properties:
               arrangement:
                 required:
-                  - sourceTransferAmountType
+                  - arrangementSubType
                 properties:
-                  sourceTransferAmountType:
-                    const: PERCENT
+                  arrangementSubType:
+                    enum:
+                      - REBALANCE_TO_VARIABLE_FUNDS_ONLY
+                      - REBALANCE_TO_STANDING_ALLOCATIONS
           then:
-            properties:
-              funds:
-                properties:
-                  transferFromFunds:
-                    items:
-                      required:
-                        - requestedPercentage
-                      not:
-                        required:
-                          - requestedAmount
-
-        - if:
-            required:
-              - arrangement
-            properties:
-              arrangement:
-                required:
-                  - destinationTransferAmountType
-                properties:
-                  destinationTransferAmountType:
-                    const: AMOUNT
-          then:
-            properties:
-              funds:
-                properties:
-                  transferToFunds:
-                    items:
-                      required:
-                        - requestedAmount
-                      not:
-                        required:
-                          - requestedPercentage
-
-        - if:
-            required:
-              - arrangement
-            properties:
-              arrangement:
-                required:
-                  - destinationTransferAmountType
-                properties:
-                  destinationTransferAmountType:
-                    const: PERCENT
-          then:
-            properties:
-              funds:
-                properties:
-                  transferToFunds:
-                    items:
-                      required:
-                        - requestedPercentage
-                      not:
-                        required:
-                          - requestedAmount
-
+            not:
+              required:
+                - funds
+                    
     Arrangement:
       type: object
       required:
         - productCode
         - arrangementType
         - frequency
+        - startDate
         - destinationTransferAmountType
-        - sourceTransferAmountType
+        - arrangementSubType
       properties:
         productCode:
           type: string
           maxLength: 100
         arrangementType:
           type: string
-          const: DOLLAR_COST_AVERAGE
+          const: ASSET_REBALANCING
         arrangementSubType:
           type: string
-          enum: [STANDARD_DCA, SPECIAL_DCA, EARNINGS_PLUS_PRINCIPAL_DCA]
+          enum: [STANDARD_REBALANCE, REBALANCE_TO_VARIABLE_FUNDS_ONLY, REBALANCE_TO_STANDING_ALLOCATIONS]
         startDate:
           type: string
           format: date
@@ -481,34 +413,16 @@ components:
           type: string
           format: date
           description: the date the arrangement should end.
-        sourceTransferAmountType:
-          type: string
-          enum:
-            - AMOUNT
-            - PERCENT
         destinationTransferAmountType:
           type: string
-          enum:
-            - AMOUNT
-            - PERCENT
+          const: PERCENT
         frequency:
           type: string
           enum: [DAILY, EVERY_TWO_WEEKS, MONTHLY, SEMI_ANNUAL, QUARTERLY, ANNUAL]
-        nextTransactionDate:
-          type: string
-          format: date
 
     Funds:
       type: object
-      required:
-        - transferFromFunds
-        - transferToFunds
       properties:
-        transferFromFunds:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/FundItem'
         transferToFunds:
           type: array
           minItems: 1
@@ -519,27 +433,15 @@ components:
       type: object
       required:
         - fundId
+        - requestedPercentage
       properties:
         fundId:
           type: string
           maxLength: 100
-        requestedAmount:
-          type: number
-          minimum: 0
-          maximum: 9999999999.99
-          multipleOf: 0.01
         requestedPercentage:
           type: number
           minimum: 0
           maximum: 100
-      oneOf:
-        - required: [requestedAmount]
-          not:
-            required: [requestedPercentage]
-
-        - required: [requestedPercentage]
-          not:
-            required: [requestedAmount]
 
     AuditTransSummation:
       type: object
@@ -637,7 +539,7 @@ components:
         taxId:
           type: string
           maxLength: 9
-
+    
     PartyRelationship:
       description: Schema for party relationship data
       type: object
@@ -650,16 +552,15 @@ components:
           items:
             type: string
             enum:
-              - OWNER
-              - JOINT_OWNER
-              - ANNUITANT
-              - JOINT_ANNUITANT
-              - PRIMARY_BENEFICIARY
-              - CONTINGENT_BENEFICIARY
-    
-    
-    DCAResponse:
-      description: Synchronous Day-1 response to a DCA update request.
+            - OWNER
+            - JOINT_OWNER
+            - ANNUITANT
+            - JOINT_ANNUITANT
+            - PRIMARY_BENEFICIARY
+            - CONTINGENT_BENEFICIARY
+
+    AutoRebalanceResponse:
+      description: Synchronous Day-1 response to an Auto Rebalance submission.
       type: object
       required:
         - status
@@ -667,14 +568,14 @@ components:
       properties:
         requestId:
           description: |
-           Server-assigned identifier for this update request. Carried forward
+           Server-assigned identifier for this submission. Carried forward
             into the Day-2 confirmation event so consumers can correlate
             Day-1 and Day-2.
           type: string
         status:
           description: Synchronous-tier outcome.
           type: string
-          const: ACCEPTED
+          const: CREATED
         message:
           description: Optional informational message related to request submission.
           type: string
@@ -685,15 +586,14 @@ components:
         broker: SAP Advanced Event Mesh / Solace
         topicPattern: "{root}/ift/v1/{eventType}/{status}/{transactionType}/{firm}"
         deliveryModel: topic-subscription
-        asyncApiSpec: "./asyncapi/DCA_Day2_v1.yaml"
+        asyncApiSpec: "./asyncapi/AR_Day2_v1.yaml"
         note: >
           Delivered over a message broker via topic subscription, not an HTTP
           callback. A companion AsyncAPI document is the machine-readable
           contract; this extension exists for interim discoverability.
       type: object
       description: >
-       Canonical Day-2 arrangement confirmation event published to the enterprise event mesh after an arrangement transaction completes processing.
-
+        Canonical Day-2 arrangement confirmation event published to the enterprise event mesh after an arrangement transaction completes processing.
       required:
         - eventType
         - eventId
@@ -740,7 +640,7 @@ components:
         requestId:
           type: string
           description: >
-            Identifier assigned when the arrangement request was updated.
+            Identifier assigned when the arrangement request was submitted.
             Used to correlate the Day-2 confirmation with the original
             Day-1 request.
         correlationId:
@@ -759,13 +659,12 @@ components:
         transactionType:
           type: string
           enum:
-            - SUBMIT_DOLLAR_COST_AVERAGE
-            - UPDATE_DOLLAR_COST_AVERAGE
-            - CANCEL_DOLLAR_COST_AVERAGE
+            - SUBMIT_AUTO_REBALANCE
+            - UPDATE_AUTO_REBALANCE
+            - CANCEL_AUTO_REBALANCE
           description: >
             High-level classification of the transaction that completed
             processing.For example, SUBMIT_* indicates creation of a new arrangement and UPDATE_* indicates modification of an existing arrangement.
-
         status:
           type: string
           description: >
@@ -782,7 +681,7 @@ components:
           type: string
           format: date
           description: >
-            Effective date of the arrangement on the policy, when applicable.
+            The date the AR transaction is intended to take effect. This may fall on a non-business day depending on carrier processing rules
         npn:
           type: string
           maxLength: 100
@@ -793,7 +692,7 @@ components:
           type: string
           maxLength: 100
           description: >
-            NSCC participant identifier associated with the updating firm, when available.
+            Unique identifier assigned to the submitting firm or participant within the NSCC network for transaction routing and processing.
         transExeDate:
           type: string
           format: date
@@ -852,7 +751,7 @@ components:
         properties:
           requestId:
             type: string
-            description: Server assigned identifier for the arrangement request.
+            description: Server-assigned identifier for the arrangement request.
           status:
             type: string
             description: Current status of the arrangement request.
