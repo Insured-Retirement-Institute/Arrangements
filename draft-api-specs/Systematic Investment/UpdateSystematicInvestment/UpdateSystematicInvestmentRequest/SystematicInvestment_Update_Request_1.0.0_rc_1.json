@@ -1,0 +1,52 @@
+{
+  "method": "PUT",
+  "path": "/v1/policies/POL123456789/arrangements/systematic-investment/ARR12345",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2026-06-15",
+    "nsccParticipantId": "NSCC998877",
+    "cusip": "123AB4567",
+    "actionIndicator": "O",
+    "arrangement": {
+      "productCode": "SystematicInvestment-001",
+      "arrangementType": "SYSTEMATIC_INVESTMENT",
+      "arrangementSubType": "STANDARD_AUTO_PAY",
+      "startDate": "2026-06-15",
+      "endDate": "2030-06-15",
+      "destinationTransferAmountType": "AMOUNT",
+      "frequency": "MONTHLY",
+      "nextTransactionDate": "2026-07-15"
+    },
+    "funds": {
+      "transferToFunds": [
+        {
+          "fundId": "DST-FUND-101",
+          "requestedAmount": 600.00
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 1000.0,
+      "correlationGuid": "123e4567-e89b-12d3-a456-426614174000",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "payer": {
+      "type": "INDIVIDUAL",
+      "firstName": "John",
+      "middleName": "A",
+      "lastName": "Doe",
+      "taxId": "123456789"
+    },
+    "producer": {
+      "producerNumber": "456789",
+      "npn": "123456",
+      "crdNumber": "654321"
+    }
+  }
+}
