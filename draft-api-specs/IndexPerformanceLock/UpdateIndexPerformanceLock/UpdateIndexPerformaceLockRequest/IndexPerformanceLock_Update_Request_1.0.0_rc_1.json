@@ -1,0 +1,62 @@
+{
+  "method": "PUT",
+  "path": "/v1/policies/POL123456789/arrangements/index-performance-lock/ARR12345",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2025-03-15",
+    "nsccParticipantId": "1234",
+    "cusip": "037833100",
+    "actionIndicator": "O",
+    "allocationOption": "SPECIFIEDFUNDS",
+    "arrangement": {
+      "productCode": "IPL-VAR-01",
+      "arrangementType": "PERFORMANCE_LOCK",
+      "arrangementSubType": "UPSIDE_PERFORMANCE_LOCK",
+      "startDate": "2025-04-01"
+    },
+    "thresholdAmount": 25000.00,
+    "funds": {
+      "transferToFunds": [
+        {
+          "fundId": "FND-INDEX-500",
+          "requestedPercentage": 60
+        },
+        {
+          "fundId": "FND-INDEX-INTL",
+          "requestedPercentage": 40
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 100,
+      "correlationGuid": "5f9c1a2e-4b8d-4e2f-9b3a-6c7d8e9f0a1b",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "INDIVIDUAL",
+        "firstName": "Jane",
+        "middleName": "Q",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "paymentForm": "ACH",
+        "allocationPercentage": 100,
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "P-000123",
+      "npn": "12345678",
+      "crdNumber": "9876543"
+    }
+  }
+}
+`

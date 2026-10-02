@@ -1,0 +1,62 @@
+{
+  "method": "POST",
+  "path": "/v1/policies/POL123456789/arrangements/allocation-instructions",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2025-06-15",
+    "nsccParticipantId": "NSCC-000123",
+    "externalArrangementId": "ARR12345",
+    "actionIndicator": "N",
+    "arrangement": {
+      "productCode": "PROD-ANNUITY-01",
+      "arrangementType": "ALLOCATION_INSTRUCTIONS",
+      "arrangementSubType": "MATURING_INDEX_INSTRUCTIONS"
+    },
+    "funds": {
+      "transferFromFunds": [
+        {
+          "fundId": "FUND-SRC-001",
+          "requestedPercentage": 100
+        }
+      ],
+      "openDate": "2024-01-01",
+      "transferToFunds": [
+        {
+          "fundId": "FUND-DEST-100",
+          "requestedPercentage": 60
+        },
+        {
+          "fundId": "FUND-DEST-200",
+          "requestedPercentage": 40
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 100,
+      "correlationGuid": "550e8400-e29b-41d4-a716-446655440000",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "INDIVIDUAL",
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "PROD-98765",
+      "npn": "12345678",
+      "crdNumber": "CRD-556677"
+    }
+  }
+}
