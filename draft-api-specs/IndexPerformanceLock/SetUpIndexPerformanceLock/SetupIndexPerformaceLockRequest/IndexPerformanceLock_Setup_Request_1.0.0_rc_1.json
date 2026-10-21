@@ -1,0 +1,54 @@
+{
+  "method": "POST",
+  "path": "/v1/policies/POL123456789/arrangements/index-performance-lock",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2025-06-15",
+    "nsccParticipantId": "1234",
+    "externalArrangementId": "ARR12345",
+    "cusip": "037833100",
+    "actionIndicator": "N",
+    "allocationOption": "SPECIFIEDFUNDS",
+    "arrangement": {
+      "productCode": "IPL-PROD-001",
+      "arrangementType": "PERFORMANCE_LOCK",
+      "arrangementSubType": "UPSIDE_PERFORMANCE_LOCK",
+      "startDate": "2025-06-16"
+    },
+    "thresholdAmount": 105000.00,
+    "funds": {
+      "transferToFunds": {
+        "fundId": "FND-INDEX-500",
+        "requestedPercentage": 100
+      }
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 105000.00,
+      "correlationGuid": "a3f4c8d2-1e2b-4c7a-9f5e-8b6d4a2c1e0f",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "INDIVIDUAL",
+        "firstName": "Jane",
+        "middleName": "Q",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "PROD-0099",
+      "npn": "8765432",
+      "crdNumber": "1122334"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "method": "PUT",
+  "path": "/v1/policies/POL123456789/arrangements/allocation-instructions/ARR12345",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2026-06-15",
+    "nsccParticipantId": "NSCC998877",
+    "cusip": "123AB4567",
+    "actionIndicator": "O",
+    "arrangement": {
+      "productCode": "AI-001",
+      "arrangementType": "ALLOCATION_INSTRUCTIONS",
+      "arrangementSubType": "STANDING_ALLOCATION"
+    },
+    "funds": {
+      "transferFromFunds": [
+        {
+          "fundId": "SRC-FUND-001",
+          "requestedPercentage": 100
+        }
+      ],
+      "transferToFunds": [
+        {
+          "fundId": "DST-FUND-101",
+          "requestedPercentage": 100
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 1000.0,
+      "correlationGuid": "123e4567-e89b-12d3-a456-426614174000",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "INDIVIDUAL",
+        "firstName": "John",
+        "middleName": "A",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "456789",
+      "npn": "123456",
+      "crdNumber": "654321"
+    }
+  }
+}
