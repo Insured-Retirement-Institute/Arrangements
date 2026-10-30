@@ -108,11 +108,10 @@ Sample of what most schemas include (Submit and Update DCA arrangements share a 
 - **Root Attributes:** effectiveDate, externalArrangementId (Submit only), nsccParticipantId, cusip, actionIndicator.
 - **Arrangement Details:** productCode, arrangementType (DOLLAR_COST_AVERAGE), arrangementSubType, frequency, startDate, endDate.
 - **Transfer Configuration:** sourceTransferAmountType (AMOUNT/PERCENT), destinationTransferAmountType (AMOUNT/PERCENT).
-- **Funds:** transferFromFunds[] and transferToFunds[] with fundId
+- **Funds:** transferFromFunds[] and transferToFunds[].
 - **Audit Information:** auditTotalType, auditTotal, correlationGuid, correlationIdState.
-- **Parties:** parties[] as a direct array of individual or entity objects with allocationPercentage, paymentForm, and relationships.
+- **Parties:** parties[] as a direct array of individual or entity objects.
 - **Producer Info:** producerNumber, npn, crdNumber.
-- **Validation Rules:** conditional enforcement of amount vs percentage fields.
 
 Detailed schemas for Submit and Update transactions are available in their respective folders.
 
@@ -127,13 +126,13 @@ All API operations—across synchronous and asynchronous processing models—adh
 ### Submit (POST) Response
 - Return **HTTP 201 Created**.
 - Include a Location header pointing to /v1/policies/{policyNumber}/arrangement-requests/{requestId}
-- Return a 'DCAResponse' object in the response body, including 'status'(CREATED, REJECTED), and 'correlationId'
+- Return a 'DCAResponse' object in the response body, including 'status'(CREATED), and 'correlationId'
 - A GET endpoint is available to retrieve the lifecycle status with **HTTP 200 — SUCCESS**.
 
 ### Update (PUT) Response
 - Return **HTTP 202 Accepted**.
 - Include a Location header pointing to /v1/policies/{policyNumber}/arrangement-requests/{requestId}
-- Return a 'DCAResponse' object in the response body, including 'status'(ACCEPTED, REJECTED) and 'correlationId'
+- Return a 'DCAResponse' object in the response body, including 'status'(ACCEPTED) and 'correlationId'
 - A GET endpoint is available to retrieve the lifecycle status with **HTTP 200 — SUCCESS**.
 
 ---
@@ -172,7 +171,7 @@ Every error response—regardless of transaction type—includes:
 | Field | Description |
 |-------|-------------|
 | **httpStatus** | Numeric HTTP status code (400–599) representing the type and severity of the failure. |
-| **code** | Structured identifier in the enforced format: `domain.category.subcategory`. Enables machine‑readable error handling. |
+| **code** | Structured identifier, enables machine‑readable error handling. |
 | **correlationId** | correlationId is returned as a response header on all responses, including errors. It is not included in the response body. |
 | **message** | End‑user‑friendly explanation, safe to show in portals or consumer‑facing apps. |
 | **validationErrors** | Array describing domain/business rule violations; each entry requires its own code and message. |
@@ -199,7 +198,7 @@ These responses confirm acceptance of the request but do not indicate final tran
 Final processing occurs asynchronously in downstream systems.
 
 ## Delivery Model
-Day‑2 confirmation events are published to the enterprise event mesh (SAP Advanced Event Mesh / Solace).  
+Day‑2 confirmation events are published to the enterprise event mesh (Advanced Event Mesh).  
 Consumers receive confirmations through topic‑based subscriptions.  
 Day‑2 confirmations are event‑driven only.
 
@@ -225,6 +224,7 @@ The schema defines the standardized event structure, including:
 Supported transactionType values include:
 - SUBMIT_DOLLAR_COST_AVERAGE
 - UPDATE_DOLLAR_COST_AVERAGE
+- CANCEL_DOLLAR_COST_AVERAGE
 
 ## Status Visibility
 A GET lifecycle endpoint is available to retrieve the current processing status using the requestId.  
@@ -249,11 +249,6 @@ These OpenAPI definitions are designed to support consistent integration, valida
 
 ---
 
-## Versioning ##
-- Follow semantic versioning for spec updates.
-- Document changes in commit messages and changelogs to support integrator adoption.
----
-
 ## Code of Conduct
 
 Please review and adhere to the **Code of Conduct** and **Style Guide** provided in the repository to ensure consistency and professionalism.
@@ -273,3 +268,15 @@ Please review and adhere to the **Code of Conduct** and **Style Guide** provided
 - **Carrier Business Owner:** digitalfirst@brighthousefinancial.com  
 - **Distributor Business Owner:** [contact]  
 - **Solution Provider Business Owner:** [contact] 
+
+---
+
+## Versioning
+## v2.0.0 Highlights
+
+- **Documentation Enhancements:** Added schema-level and property-level descriptions across SubmitDCARequest, Arrangement, Funds, FundItem, AuditTransSummation, Producer, Party, IndividualIdentity, EntityIdentity, PartyRelationship, DCAResponse, GetArrangementRequestStatus, and Day2ArrangementConfirmationEvent.
+- **Required Field Changes:** Added IndividualIdentity.type as a required field.
+- **CUSIP Validation Update:** Modified CUSIP validation pattern to support the standardized alphanumeric format used across transaction APIs.
+- **Constraint Updates:** Expanded EntityIdentity.name.maxLength from 100 to 180 characters and updated the associated validation pattern accordingly. Removed maxLength: 500 from DCAResponse.message.
+
+---
