@@ -4,7 +4,7 @@
 This repository consolidates **Auto Rebalance (AR) arrangement transactions** for annuity products under the **IRI Digital First vision**.
 
 - **Submit Auto Rebalance Arrangement**
-- **Update / Override / Cancel Auto Rebalance Arrangement**
+- **Update / Cancel Auto Rebalance Arrangement**
 
 The initiative modernizes legacy batch/manual Auto Rebalance processes into RESTful APIs for secure, scalable, and interoperable processing. It leverages industry standards and provides a unified approach for carriers, distributors, and solution providers.
 
@@ -39,11 +39,11 @@ Auto Rebalance is an investment management strategy that periodically realigns c
 
 ### 1. Submit Auto Rebalance Arrangement
 Handles scenarios where a new Auto Rebalance arrangement is submitted.
-**Endpoint:** `/v1/policies/{policyNumber}/arrangements/auto-rebalance`
+**Endpoint:** `/v2/policies/{policyNumber}/arrangements/auto-rebalance`
 
-### 2. Update / Override / Cancel Auto Rebalance Arrangement
+### 2. Update / Cancel Auto Rebalance Arrangement
 Handles scenarios where an existing Auto Rebalance arrangement is updated, overridden, or cancelled.  
-**Endpoint:** `/v1/policies/{policyNumber}/arrangements/auto-rebalance/{arrangementId}`
+**Endpoint:** `/v2/policies/{policyNumber}/arrangements/auto-rebalance/{arrangementId}`
 
 ---
 ## Supported Transactions
@@ -75,8 +75,8 @@ Pain Points: Complex configuration logic, lack of standardization, manual proces
 
 ---
 
-### 2. Update / Override / Cancel Auto Rebalance Arrangement
-Handles scenarios where an existing Auto Rebalance arrangement is modified, overridden, corrected, or cancelled using an arrangementId. 
+### 2. Update / Cancel Auto Rebalance Arrangement
+Handles scenarios where an existing Auto Rebalance arrangement is modified, corrected, or cancelled using an arrangementId. 
 **Folder:** `./updateautorebalance/`
 
 #### User Stories
@@ -106,13 +106,12 @@ Pain Points: Complex override logic, unclear constraints when modifying arrangem
 Sample of what most schemas include (Submit and Update Auto Rebalance arrangements share a common structure, with Update additionally requiring an arrangementId path parameter):
 
 - **Root Attributes:** effectiveDate, externalArrangementId (Submit only), nsccParticipantId, cusip, actionIndicator.
-- **Arrangement Details:**  productCode, arrangementType (ASSET_REBALANCING), arrangementSubType, frequency, startDate, endDate.
-- **Transfer Configuration:** destinationTransferAmountType (PERCENT).
+- **Arrangement Details:**  productCode, arrangementType, arrangementSubType, frequency, startDate, endDate.
+- **Transfer Configuration:** destinationTransferAmountType.
 - **Funds:** transferToFunds[] with target allocation percentages and fund identifiers.
 - **Audit Information:** auditTotalType, auditTotal, correlationGuid, correlationIdState.
-- **Parties:** parties[] as a direct array of individual or entity objects with allocationPercentage, paymentForm, and relationships.
+- **Parties:** parties[] as a direct array of individual or entity objects
 - **Producer Info:** producerNumber, npn, crdNumber.
-- **Validation Rules:** conditional enforcement of amount vs percentage fields.
 
 Detailed schemas for Submit and Update transactions are available in their respective folders.
 
@@ -126,14 +125,14 @@ All API operations—across synchronous and asynchronous processing models—adh
 
 ### Submit (POST) Response
 - Return **HTTP 201 Created**.
-- Include a Location header pointing to /v1/policies/{policyNumber}/arrangement-requests/{requestId}
-- Return a 'Auto RebalanceResponse' object in the response body, including 'status'(CREATED, REJECTED), and 'correlationId'
+- Include a Location header pointing to /v2/policies/{policyNumber}/arrangement-requests/{requestId}
+- Return a 'Auto RebalanceResponse' object in the response body, including 'status'(CREATED), and 'correlationId'
 - A GET endpoint is available to retrieve the lifecycle status with **HTTP 200 — SUCCESS**.
 
 ### Update (PUT) Response
 - Return **HTTP 202 Accepted**.
-- Include a Location header pointing to /v1/policies/{policyNumber}/arrangement-requests/{requestId}
-- Return a 'Auto RebalanceResponse' object in the response body, including 'status'(ACCEPTED, REJECTED) and 'correlationId'
+- Include a Location header pointing to /v2/policies/{policyNumber}/arrangement-requests/{requestId}
+- Return a 'Auto RebalanceResponse' object in the response body, including 'status'(ACCEPTED) and 'correlationId'
 - A GET endpoint is available to retrieve the lifecycle status with **HTTP 200 — SUCCESS**.
 
 ---
@@ -172,7 +171,7 @@ Every error response—regardless of transaction type—includes:
 | Field | Description |
 |-------|-------------|
 | **httpStatus** | Numeric HTTP status code (400–599) representing the type and severity of the failure. |
-| **code** | Structured identifier in the enforced format: `domain.category.subcategory`. Enables machine‑readable error handling. |
+| **code** | Structured identifier, enables machine‑readable error handling. |
 | **correlationId** | correlationId is returned as a response header on all responses, including errors. It is not included in the response body. |
 | **message** | End‑user‑friendly explanation, safe to show in portals or consumer‑facing apps. |
 | **validationErrors** | Array describing domain/business rule violations; each entry requires its own code and message. |
@@ -199,7 +198,7 @@ These responses confirm acceptance of the request but do not indicate final tran
 Final processing occurs asynchronously in downstream systems.
 
 ## Delivery Model
-Day‑2 confirmation events are published to the enterprise event mesh (SAP Advanced Event Mesh / Solace).  
+Day‑2 confirmation events are published to the enterprise event mesh (Advance Event Mesh).  
 Consumers receive confirmations through topic‑based subscriptions.  
 Day‑2 confirmations are event‑driven only.
 
@@ -225,6 +224,7 @@ The schema defines the standardized event structure, including:
 Supported transactionType values include:
 - SUBMIT_AUTO_REBALANCE
 - UPDATE_AUTO_REBALANCE
+- CANCEL_AUTO_REBALANCE
 
 ## Status Visibility
 A GET lifecycle endpoint is available to retrieve the current processing status using the requestId.  
@@ -247,13 +247,6 @@ The specifications include:
 
 These OpenAPI definitions are designed to support consistent integration, validation, and implementation across carriers, distributors, and solution providers.
 
----
-
-## Versioning ##
-- Follow semantic versioning for spec updates.
-- Document changes in commit messages and changelogs to support integrator adoption.
----
-
 ## Code of Conduct
 
 Please review and adhere to the **Code of Conduct** and **Style Guide** provided in the repository to ensure consistency and professionalism.
@@ -273,3 +266,16 @@ Please review and adhere to the **Code of Conduct** and **Style Guide** provided
 - **Carrier Business Owner:** digitalfirst@brighthousefinancial.com  
 - **Distributor Business Owner:** [contact]  
 - **Solution Provider Business Owner:** [contact] 
+
+---
+
+## Versioning
+
+## v2.0.0 Highlights
+
+- **Documentation Enhancements:** Added schema-level and property-level descriptions across `SubmitAutoRebalanceRequest`, `Arrangement`, `Funds`, `FundItem`, `AuditTransSummation`, `Producer`, `Party`, `IndividualIdentity`, `EntityIdentity`, `PartyRelationship`, `AutoRebalanceResponse`, `GetArrangementRequestStatus`, and `Day2ArrangementConfirmationEvent`.
+- **Required Field Changes:** Added `IndividualIdentity.type` as a required field.
+- **Constraint Updates:** Expanded `EntityIdentity.name.maxLength` from **100** to **180** characters and updated the associated validation pattern accordingly. Removed maxLength: 500 from AutoRebalanceResponse.message.
+- **CUSIP Validation Update:** Modified CUSIP validation pattern to support the standardized alphanumeric format used across transaction APIs.
+
+---
