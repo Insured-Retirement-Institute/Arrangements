@@ -48,7 +48,7 @@ Index Performance Lock arrangements allow policy owners and financial profession
 Handles creation of a new Index Performance Lock arrangement.
 
 **Endpoint:**  
-`/v1/policies/{policyNumber}/arrangements/index-performance-lock`
+`/v2/policies/{policyNumber}/arrangements/index-performance-lock`
 
 **Folder:**  
 `./SubmitIndexPerformanceLock/`
@@ -80,10 +80,10 @@ Pain Points: Complex lock configurations and monitoring requirements.
 
 ## 2. Update Index Performance Lock Arrangement
 
-Handles scenarios where an existing Index Performance Lock arrangement is modified, overridden, corrected, or cancelled.
+Handles scenarios where an existing Index Performance Lock arrangement is modified, corrected, or cancelled.
 
 **Endpoint:**  
-`/v1/policies/{policyNumber}/arrangements/index-performance-lock/{arrangementId}`
+`/v2/policies/{policyNumber}/arrangements/index-performance-lock/{arrangementId}`
 
 **Folder:**  
 `./UpdateIndexPerformanceLock/`
@@ -123,6 +123,7 @@ Sample of what most schemas include (Submit and Update IPL arrangements share a 
 - **Audit Information:** auditTotalType, auditTotal, correlationGuid, correlationIdState.
 - **Parties:** IndividualParty or EntityParty participants associated with the arrangement.
 - **Producer Information:** producerNumber, npn, crdNumber.
+- **Forms:** forms[] containing attachment-related metadata including documentControlNumber, form name, and form version.
 
 Detailed schemas for Submit and Update transactions are available in their respective folders.
 
@@ -140,12 +141,12 @@ All API operations—across synchronous and asynchronous processing models—adh
 - Include a Location header pointing to:
 
 ```text
-/v1/policies/{policyNumber}/arrangement-requests/{requestId}
+/v2/policies/{policyNumber}/arrangement-requests/{requestId}
 ```
 
 - Return an `IndexPerformanceLockResponse` object including:
   - requestId
-  - status (ACCEPTED)
+  - status (CREATED)
 
 ### Update (PUT) Response
 
@@ -153,7 +154,7 @@ All API operations—across synchronous and asynchronous processing models—adh
 - Include a Location header pointing to:
 
 ```text
-/v1/policies/{policyNumber}/arrangement-requests/{requestId}
+/v2/policies/{policyNumber}/arrangement-requests/{requestId}
 ```
 
 - Return an `IndexPerformanceLockResponse` object including:
@@ -191,8 +192,10 @@ Every error response includes:
 - A structured and validated **error code**
 - A **timestamp** indicating when the error occurred
 - A developer-focused **technical message** (`message`)
+- An optional **userMessage** suitable for display in client applications
 - A **correlationId** for cross-system tracing
-- A **field-level** or **rule-level** error collection
+- Optional **retry guidance** (`isRetryable`)
+- A structured collection of **validation errors** (`validationErrors`)
 
 ---
 
@@ -201,10 +204,26 @@ Every error response includes:
 | Field | Description |
 |----------|----------|
 | **httpStatus** | Numeric HTTP status code (400–599). |
-| **code** | Structured error code identifier. |
-| **correlationId** | Returned as a response header on all responses, including errors. |
-| **message** | End-user-friendly explanation, safe to show in portals or consumer-facing applications. |
-| **validationErrors** | Array of domain/business rule violations. |
+| **code** | Structured machine-readable error identifier in the format `domain.category.subcategory`. |
+| **correlationId** | Correlation identifier used for end-to-end request tracing across systems. |
+| **message** | Developer-facing explanation of the error intended for troubleshooting and support. |
+| **userMessage** | Optional end-user-friendly message suitable for display in portals or consumer-facing applications. |
+| **timestamp** | UTC timestamp indicating when the error was detected. |
+| **isRetryable** | Indicates whether resubmitting the same request may succeed. |
+| **validationErrors** | Optional collection of field-level or business-rule validation failures. |
+
+---
+
+# ValidationError Structure
+
+When validation or business-rule failures occur, the response may include one or more entries in `validationErrors`.
+
+| Field | Description |
+|----------|----------|
+| **code** | Machine-readable identifier for the specific validation failure. |
+| **message** | Developer-facing description of the validation issue. |
+| **userMessage** | Optional end-user-friendly validation message. |
+| **path** | JSON Pointer identifying the request field associated with the validation issue. |
 
 ---
 
@@ -318,7 +337,14 @@ Please review and adhere to the **Code of Conduct** and **Style Guide** provided
 
 # Versioning
 
-- Follow semantic versioning for specification updates.
-- Document changes in commit messages and changelogs.
+## Versioning
+
+## v2.0.0 Highlights
+
+- **Documentation Enhancements:** Added schema-level and property-level descriptions across `SetUpIndexPerformanceLock`, `Arrangement`, `Funds`, `FundItem`, `AuditTransSummation`, `Producer`, `Party`, `IndividualIdentity`, `EntityIdentity`, `PartyRelationship`, `IndexPerformanceLockResponse`, `GetArrangementRequestStatus`, `Error`, `ValidationError`, and `Day2ArrangementConfirmationEvent`.
+- **Constraint Updates:** Expanded `EntityIdentity.name.maxLength` from **100** to **180** characters, added `minLength` validation to party identity fields, and added minimum item validation for collection-based fields.
+- **CUSIP Validation Update:** Modified CUSIP validation pattern to support the standardized alphanumeric format used across transaction APIs.
+- **Error Handling Standardization:** Replaced the error model with the new IRI standardized error structure.
+- **Document Processing Support:** Added support for Forms metadata, including the new `forms` array and reusable `Form` schema for attachment-related processing.
 
 ---
