@@ -1,0 +1,66 @@
+{
+  "method": "PUT",
+  "path": "/v2/policies/POL123456789/arrangements/allocation-instructions/ARR12345",
+  "headers": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "query": {
+    "associatedFirmId": "FIRM123"
+  },
+  "body": {
+    "effectiveDate": "2026-08-01",
+    "nsccParticipantId": "12345",
+    "cusip": "123AB4567",
+    "actionIndicator": "C",
+    "arrangement": {
+      "productCode": "AI-001",
+      "arrangementType": "ALLOCATION_INSTRUCTIONS",
+      "arrangementSubType": "MATURING_INDEX_INSTRUCTIONS"
+    },
+    "funds": {
+      "openDate": "2024-01-01",
+      "transferFromFunds": [
+        {
+          "fundId": "SRC-FUND-001",
+          "requestedPercentage": 100
+        }
+      ],
+      "transferToFunds": [
+        {
+          "fundId": "DST-FUND-101",
+          "requestedPercentage": 100
+        }
+      ]
+    },
+    "auditTransSummation": {
+      "auditTotalType": "SUM",
+      "auditTotal": 1000.0,
+      "correlationGuid": "123e4567-e89b-12d3-a456-426614174000",
+      "correlationIdState": "INITIAL_USAGE"
+    },
+    "parties": [
+      {
+        "type": "INDIVIDUAL",
+        "firstName": "John",
+        "middleName": "A",
+        "lastName": "Doe",
+        "taxId": "123456789",
+        "relationships": [
+          "OWNER"
+        ]
+      }
+    ],
+    "producer": {
+      "producerNumber": "456789",
+      "npn": "123456",
+      "crdNumber": "654321"
+    },
+    "forms": [
+      {
+        "documentControlNumber": "10001",
+        "name": "Original Application",
+        "number": "APP-2025-01"
+      }
+    ]
+  }
+}

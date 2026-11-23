@@ -8,7 +8,7 @@
 
 The initiative modernizes legacy batch/manual Allocation Instructions processes into RESTful APIs for secure, scalable, and interoperable processing. It leverages industry standards and provides a unified approach for carriers, distributors, and solution providers.
 
-Allocation Instructions allow contract owners and financial professionals to specify how premiums, transfers, or other transaction values should be allocated among available investment options. These instructions help ensure that future allocations are directed according to the desired investment strategy.
+The Allocations API defines a standardized method for retrieving and updating premium allocation instructions for annuity contracts. These instructions help ensure that future allocations are directed according to the desired investment strategy.
 
 ---
 
@@ -42,7 +42,7 @@ Allocation Instructions allow contract owners and financial professionals to spe
 ### 1. Submit Allocation Instructions Arrangement
 Handles creation of a new Allocation Instructions arrangement.
 
-**Endpoint:** `/v1/policies/{policyNumber}/arrangements/allocation-instructions`
+**Endpoint:** `/v2/policies/{policyNumber}/arrangements/allocation-instructions`
 
 **Folder:** `./SubmitAllocationInstructions/`
 
@@ -70,11 +70,11 @@ Pain Points: Complex investment allocation configurations.
 
 ---
 
-### 2. Update Allocation Instructions Arrangement
+### 2. Update / Cancel Allocation Instructions Arrangement
 
 Handles scenarios where an existing Allocation Instructions arrangement is updated.
 
-**Endpoint:** `/v1/policies/{policyNumber}/arrangements/allocation-instructions/{arrangementId}`
+**Endpoint:** `/v2/policies/{policyNumber}/arrangements/allocation-instructions/{arrangementId}`
 
 **Folder:** `./UpdateAllocationInstructions/`
 
@@ -106,29 +106,27 @@ Pain Points: Complex allocation configurations and inconsistent implementation a
 Sample of what the Allocation Instructions Submit and Update schemas include:
 
 - Root Attributes: effectiveDate, nsccParticipantId, externalArrangementId (Submit only), cusip, actionIndicator.
-- Arrangement Details:  productCode, arrangementType, arrangementSubType.
-- Fund Details:
-  - transferFromFunds
-  - transferToFunds
-  - openDate 
-- Audit Information:  auditTotalType, auditTotal, correlationGuid, correlationIdState.
-- Parties:  IndividualParty or EntityParty participants associated with the arrangement.
-- Producer Information:  producerNumber, npn, crdNumber.
-
+- **Arrangement Details:**  productCode, arrangementType, arrangementSubType.
+- **Fund Details:**  transferFromFunds,  transferToFunds
+- **Audit Information:**  auditTotalType, auditTotal, correlationGuid, correlationIdState.
+- **Parties:**  IndividualParty or EntityParty participants associated with the arrangement.
+- **Producer:** Information:  producerNumber, npn, crdNumber.
+- **Forms:** forms[] containing attachment-related metadata including documentControlNumber, form name, and form version.
 Detailed schemas for Submit and Update transactions are available in their respective folders.
 
 ---
 
 # Response Schema Overview
 
-All API operations—across synchronous and asynchronous processing models—adhere to a unified **Error schema**. This ensures consistent error handling, predictable integration behavior, and standardized troubleshooting across all Allocation Instructions transactions.
+All API operations—across synchronous and asynchronous processing models—adhere to a unified 
+**Error schema**. This ensures consistent error handling, predictable integration behavior, and standardized troubleshooting across all Allocation Instructions transactions.
 
 ## Success Response Expectations
 
 ### Submit (POST) Response
 - Return **HTTP 201 Created**
 - Include a Location header pointing to:
-  `/v1/policies/{policyNumber}/arrangement-requests/{requestId}`
+  `/v2/policies/{policyNumber}/arrangement-requests/{requestId}`
 - Return an `AllocationInstructionsResponse` including:
   - requestId
   - status (CREATED)
@@ -136,7 +134,7 @@ All API operations—across synchronous and asynchronous processing models—adh
 ### Update (PUT) Response
 - Return **HTTP 202 Accepted**
 - Include a Location header pointing to:
-  `/v1/policies/{policyNumber}/arrangement-requests/{requestId}`
+  `/v2/policies/{policyNumber}/arrangement-requests/{requestId}`
 - Return an `AllocationInstructionsResponse` including:
   - requestId
   - status (ACCEPTED)
@@ -160,27 +158,46 @@ A GET endpoint is available to retrieve the current status of the arrangement re
 
 ---
 
-## Standard Error Schema
+# Standard Error Schema
 
-Every error response—regardless of transaction type—includes:
+Every error response includes:
+
 - An HTTP status code in the **400–599** range
 - A structured and validated **error code**
-- A **timestamp** of when the error was generated
-- A developer‑focused **technical message** (`message`)
-- A **correlationId** for cross‑system tracing
-- A **field‑level** or **rule‑level** error collection
+- A **timestamp** indicating when the error occurred
+- A developer-focused **technical message** (`message`)
+- An optional **userMessage** suitable for display in client applications
+- A **correlationId** for cross-system tracing
+- Optional **retry guidance** (`isRetryable`)
+- A structured collection of **validation errors** (`validationErrors`)
 
 ---
 
-## Key Fields
+# Key Fields
 
 | Field | Description |
-|-------|-------------|
-| **httpStatus** | Numeric HTTP status code (400–599) representing the type and severity of the failure. |
-| **code** | Structured identifier in the enforced format. Enables machine‑readable error handling. |
-| **correlationId** | correlationId is returned as a response header on all responses, including errors. It is not included in the response body. |
-| **message** | End‑user‑friendly explanation, safe to show in portals or consumer‑facing apps. |
-| **validationErrors** | Array describing domain/business rule violations; each entry requires its own code and message. |
+|----------|----------|
+| **httpStatus** | Numeric HTTP status code (400–599). |
+| **code** | Structured machine-readable error identifier in the format `domain.category.subcategory`. |
+| **correlationId** | Correlation identifier used for end-to-end request tracing across systems. |
+| **message** | Developer-facing explanation of the error intended for troubleshooting and support. |
+| **userMessage** | Optional end-user-friendly message suitable for display in portals or consumer-facing applications. |
+| **timestamp** | UTC timestamp indicating when the error was detected. |
+| **isRetryable** | Indicates whether resubmitting the same request may succeed. |
+| **validationErrors** | Optional collection of field-level or business-rule validation failures. |
+
+---
+
+# ValidationError Structure
+
+When validation or business-rule failures occur, the response may include one or more entries in `validationErrors`.
+
+| Field | Description |
+|----------|----------|
+| **code** | Machine-readable identifier for the specific validation failure. |
+| **message** | Developer-facing description of the validation issue. |
+| **userMessage** | Optional end-user-friendly validation message. |
+| **path** | JSON Pointer identifying the request field associated with the validation issue. |
 
 ---
 
@@ -277,7 +294,15 @@ Please review and adhere to the **Code of Conduct** and **Style Guide** provided
 
 ---
 
-## Versioning ##
-- Follow semantic versioning for spec updates.
-- Document changes in commit messages and changelogs to support integrator adoption.
+## Versioning
+
+## v2.0.0 Highlights
+
+- **Documentation Enhancements:** Added schema-level and property-level descriptions across `SubmitAllocationInstructionsRequest`, `UpdateAllocationInstructionsRequest`, `Arrangement`, `Funds`, `FundItem`, `AuditTransSummation`, `Producer`, `Party`, `IndividualIdentity`, `EntityIdentity`, `PartyRelationship`, `AllocationInstructionsResponse`, `GetArrangementRequestStatus`, `Error`, and `Day2ArrangementConfirmationEvent`.
+- **Party Model Standardization:** Added `IndividualIdentity.type` as a required field
+- **Constraint Updates:** Expanded `EntityIdentity.name.maxLength` from **100** to **180** characters, added `minLength` validation to party identity fields, and removed `maxLength: 500` from `AllocationInstructionsResponse.message`.
+- **CUSIP Validation Update:** Modified CUSIP validation pattern to support the standardized alphanumeric format used across transaction APIs.
+- **Enhanced Validation Logic:** Update the conditional logic for `transferFromFunds` for the update API.
+- **Error Handling Standardization:** Replaced the error model with the new IRI standardized error structure.
+- **Document Processing Support:** Added support for Forms metadata, including the new `forms` array and reusable `Form` schema for attachment-related processing.
 ---
